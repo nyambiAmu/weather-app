@@ -81,6 +81,10 @@ h1 {
   right: -90%;
   transform-origin: 0 0;
   transform: rotate(269deg);
+  position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .app .bottom {

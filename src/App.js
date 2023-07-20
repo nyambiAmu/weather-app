@@ -1,57 +1,42 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable jsx-a11y/alt-text */
+import logo from './logo.svg';
+import './App.css';
+
+import WeatherService from './Componets/WeatherService';
+import { WiStrongWind, WiHumidity} from 'react-icons/wi';
+
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { WiStrongWind, WiHumidity, WiCloud, WiDaySunny, WiRain, WiSnow } from 'react-icons/wi';
 
 function App() {
-  const [data, setData] = useState({});
-  const [location, setLocation] = useState('');
   const [currentDateTime, setCurrentDateTime] = useState('');
-
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=ba6704ed3d70ea9cadddd1dd58219724`;
-
-  const searchLocation = (event) => {
-    if (event.key === 'Enter') {
-      axios.get(url).then((response) => {
-        setData(response.data);
-        console.log(response.data);
-      });
-      setLocation('');
-    }
-  };
+  const [cityName, setCityName] = useState(' ')
+  const { weather, refetch } = WeatherService(cityName);
+  console.log(weather);
+  
+  
 
   const getWindIcon = () => {
-    if (data.wind && data.wind.speed >= 10) {
-      return <WiStrongWind size={24} />;
+    console.log(weather?.wind, weather?.wind.speed);
+    if (weather?.wind && weather?.wind.speed >= 10) {
+      return <WiStrongWind size={5} />;
     }
     return null;
   };
 
   const getHumidityIcon = () => {
-    if (data.main && data.main.humidity >= 50) {
+    if (weather?.main && weather?.main.humidity >= 50) {
       return <WiHumidity size={70} />;
     }
     return null;
   };
-
-  const getWeatherIcon = () => {
-    if (data.weather && data.weather[0]) {
-      const weather = data.weather[0].main;
-      switch (weather) {
-        case 'Clouds':
-          return <WiCloud size={70} />;
-        case 'Clear':
-          return <WiDaySunny size={70} />;
-        case 'Rain':
-          return <WiRain size={70} />;
-        case 'Snow':
-          return <WiSnow size={70} />;
-        default:
-          return null;
-      }
-    }
-    return null;
+  const convertToCelsius = (kelvin) => {
+    if (kelvin === '-') return '-';
+    return (kelvin - 273.15).toFixed(0) ;
   };
-
+ 
+ 
+  const img = 'https://openweathermap.org/img/wn/' + weather?.weather[0].icon + '.png'
   useEffect(() => {
     const interval = setInterval(() => {
       const currentDate = new Date();
@@ -62,70 +47,75 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+
   return (
     <div className="app">
       <div className="search">
-        <input
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          onKeyPress={searchLocation}
-          placeholder="Enter city"
-          type="text"
-        />
-      </div>
-      <div className="container">
-        <div className="top">
-          <div className="location">
-            <p>{data.name}</p>
+      <input type='text' placeholder='Enter city name' value={cityName} onChange={(e) => setCityName(e.target.value)} />
+      <button onClick={refetch}
+          style={{ backgroundColor: 'blue', color: 'white', padding: '10px 20px', borderRadius: '15px', cursor: 'pointer' }}
+        >
+      Search</button>
+        <div className="container">
+          <div className="top">
+            <div className="location">
+              <p>{weather?.name}</p>
+            </div>
+            <div className="temp">
+            
+              {weather?.main ? (
+                
+                <h1>{convertToCelsius(weather?.main.temp)}°C</h1>
+              ) : null}
+            </div>
+            <div className="description">
+              {weather?.weather ? (
+                <>
+      
+                  <img src={img} style={{ width: '200px', height: '200px' }} />
+                  <p>{weather?.weather[0].main}</p>
+                </>
+              ) : null}
+            </div>
           </div>
-          <div className="temp">
-            {data.main ? <h1>{data.main.temp.toFixed()}°C</h1> : null}
-          </div>
-          <div className="description">
-            {data.weather ? (
-              <>
-                {getWeatherIcon()}
-                <p>{data.weather[0].main}</p>
-              </>
-            ) : null}
-          </div>
+          {weather?.name !== undefined && (
+            <div className="bottom">
+              <div className="feels">
+                {weather?.main ? (
+                  <>
+                    <p className="bold">{weather?.main.feels_like.toFixed()}°</p>
+                    <p>Feels Like</p>
+                  </>
+                ) : null}
+              </div>
+              <div className="humidity">
+                {weather?.main ? (
+                  <>
+                    {getHumidityIcon()}
+                    <p className="bold">{weather?.main.humidity}%</p>
+                    <p>Humidity</p>
+                  </>
+                ) : null}
+              </div>
+              <div className="wind">
+                {weather?.wind ? (
+                  <>
+                    {getWindIcon()}
+                    <p className="bold">{weather?.wind.speed.toFixed()} m/s</p>
+                    <p>Wind Speed</p>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
         </div>
-
-        {data.name !== undefined && (
-          <div className="bottom">
-            <div className="feels">
-              {data.main ? (
-                <>
-                  <p className="bold">{data.main.feels_like.toFixed()}°C</p>
-                  <p>Feels Like</p>
-                </>
-              ) : null}
-            </div>
-            <div className="humidity">
-              {data.main ? (
-                <>
-                  {getHumidityIcon()}
-                  <p className="bold">{data.main.humidity}%</p>
-                  <p>Humidity</p>
-                </>
-              ) : null}
-            </div>
-            <div className="wind">
-              {data.wind ? (
-                <>
-                  {getWindIcon()}
-                  <p className="bold">{data.wind.speed.toFixed()} m/s</p>
-                  <p>Wind Speed</p>
-                </>
-              ) : null}
-            </div>
-          </div>
-        )}
+      
       </div>
       <div className="current-time">
         <p>{currentDateTime}</p>
       </div>
-    </div>
+      </div>
+    
   );
 }
 
